@@ -1,6 +1,6 @@
 # coding:utf-8
-import urllib
-import settings as USettings
+import urllib.parse
+import DjangoUeditor.settings as USettings
 
 
 class UEditorEventHandler(object):
@@ -138,7 +138,7 @@ class UEditorButtonCommand(UEditorCommand):
             });
             return btn
         """ % {
-                "icon": urllib.basejoin(USettings.gSettings.MEDIA_URL , self.icon),
+                "icon": urllib.parse.urljoin(USettings.gSettings.MEDIA_URL , self.icon),
                 "onclick": self.onClick(),
                 "title": self.title
             }

@@ -6,6 +6,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 import datetime,random
 import urllib
+import urllib.parse
 
 #保存上传的文件
 def save_upload_file(PostFile,FilePath):
@@ -13,7 +14,7 @@ def save_upload_file(PostFile,FilePath):
         f = open(FilePath, 'wb')
         for chunk in PostFile.chunks():
             f.write(chunk)
-    except Exception,E:
+    except Exception as E:
         f.close()
         return u"写入文件错误:"+ E.message
     f.close()
@@ -100,7 +101,7 @@ def get_files(root_path,cur_path, allow_types=[]):
             is_allow_list= (len(allow_types)==0) or (ext in allow_types)
             if is_allow_list:
                 files.append({
-                    "url":urllib.basejoin(USettings.gSettings.MEDIA_URL ,os.path.join(os.path.relpath(cur_path,root_path),item).replace("\\","/" )),
+                    "url":urllib.parse.urljoin(USettings.gSettings.MEDIA_URL ,os.path.join(os.path.relpath(cur_path,root_path),item).replace("\\","/" )),
                     "mtime":os.path.getmtime(item_fullname)
                 })
 
@@ -191,7 +192,7 @@ def UploadFile(request):
 
     #返回数据
     return_info = {
-        'url': urllib.basejoin(USettings.gSettings.MEDIA_URL , OutputPathFormat) ,                # 保存后的文件名称
+        'url': urllib.request.urljoin(USettings.gSettings.MEDIA_URL , OutputPathFormat) ,                # 保存后的文件名称
         'original': upload_file_name,                  #原始文件名
         'type': upload_original_ext,
         'state': state,                         #上传状态，成功时返回SUCCESS,其他任何值将原样返回至图片上传框中
@@ -243,14 +244,14 @@ def catcher_remote_image(request):
                     f.write(remote_image.read())
                     f.close()
                     state="SUCCESS"
-                except Exception,E:
+                except Exception as E:
                     state=u"写入抓取图片文件错误:%s" % E.message
-            except Exception,E:
+            except Exception as E:
                 state=u"抓取图片错误：%s" % E.message
 
             catcher_infos.append({
                 "state":state,
-                "url":urllib.basejoin(USettings.gSettings.MEDIA_URL , o_path_format),
+                "url":urllib.parse.urljoin(USettings.gSettings.MEDIA_URL , o_path_format),
                 "size":os.path.getsize(o_filename),
                 "title":os.path.basename(o_file),
                 "original":remote_file_name,
@@ -288,7 +289,7 @@ def save_scrawl_file(request,filename):
         f.write(base64.decodestring(content))
         f.close()
         state="SUCCESS"
-    except Exception,E:
+    except Exception as E:
         state="写入图片文件错误:%s" % E.message
     return state
 
