@@ -1,19 +1,18 @@
 #coding:utf-8
-from importlib import import_module
 from django.http import HttpResponse
-import settings as USettings
+import DjangoUeditor.settings as USettings
 import os
 import json
 from django.views.decorators.csrf import csrf_exempt
 import datetime,random
 import urllib
+import urllib.parse
 
 def get_path_format_vars():
     return {
         "year":datetime.datetime.now().strftime("%Y"),
         "month":datetime.datetime.now().strftime("%m"),
         "day":datetime.datetime.now().strftime("%d"),
-        "date": datetime.datetime.now().strftime("%Y%m%d"),
         "time":datetime.datetime.now().strftime("%H%M%S"),
         "datetime":datetime.datetime.now().strftime("%Y%m%d%H%M%S"),
         "rnd":random.randrange(100,999)
@@ -25,7 +24,7 @@ def save_upload_file(PostFile,FilePath):
         f = open(FilePath, 'wb')
         for chunk in PostFile.chunks():
             f.write(chunk)
-    except Exception,E:
+    except Exception as E:
         f.close()
         return u"写入文件错误:"+ E.message
     f.close()
@@ -74,8 +73,8 @@ def list_files(request):
         "listimage":USettings.UEditorUploadSettings.get("imageManagerListPath","")
     }
     #取得参数
-    list_size=long(request.GET.get("size",listSize[action]))
-    list_start=long(request.GET.get("start",0))
+    list_size=int(request.GET.get("size",listSize[action]))
+    list_start=int(request.GET.get("start",0))
 
     files=[]
     root_path=os.path.join(USettings.gSettings.MEDIA_ROOT,listpath[action]).replace("\\","/")
@@ -112,7 +111,7 @@ def get_files(root_path,cur_path, allow_types=[]):
             is_allow_list= (len(allow_types)==0) or (ext in allow_types)
             if is_allow_list:
                 files.append({
-                    "url":urllib.basejoin(USettings.gSettings.MEDIA_URL ,os.path.join(os.path.relpath(cur_path,root_path),item).replace("\\","/" )),
+                    "url":urllib.parse.urljoin(USettings.gSettings.MEDIA_URL ,os.path.join(os.path.relpath(cur_path,root_path),item).replace("\\","/" )),
                     "mtime":os.path.getmtime(item_fullname)
                 })
 
@@ -155,9 +154,9 @@ def UploadFile(request):
         "uploadimage":"imageAllowFiles",
         "uploadvideo":"videoAllowFiles"
     }
-    if upload_allow_type.has_key(action):
+    if action in upload_allow_type:
         allow_type= list(request.GET.get(upload_allow_type[action],USettings.UEditorUploadSettings.get(upload_allow_type[action],"")))
-        if not upload_original_ext.lower()  in allow_type:
+        if not upload_original_ext  in allow_type:
             state=u"服务器不允许上传%s类型的文件。" % upload_original_ext
 
     #大小检验
@@ -167,7 +166,7 @@ def UploadFile(request):
         "uploadscrawl":"scrawlMaxSize",
         "uploadvideo":"videoMaxSize"
     }
-    max_size=long(request.GET.get(upload_max_size[action],USettings.UEditorUploadSettings.get(upload_max_size[action],0)))
+    max_size=int(request.GET.get(upload_max_size[action],USettings.UEditorUploadSettings.get(upload_max_size[action],0)))
     if  max_size!=0:
         from utils import FileSize
         MF=FileSize(max_size)
@@ -194,19 +193,14 @@ def UploadFile(request):
     #所有检测完成后写入文件
     if state=="SUCCESS":
         if action=="uploadscrawl":
-            state=save_scrawl_file(request, os.path.join(OutputPath,OutputFile))
+            state=save_scrawl_file(request,os.path.join(OutputPath,OutputFile))
         else:
             #保存到文件中，如果保存错误，需要返回ERROR
-            upload_module_name = USettings.UEditorUploadSettings.get("upload_module", None)
-            if upload_module_name:
-                mod = import_module(upload_module_name)
-                state = mod.upload(file, OutputPathFormat)
-            else:
-                state = save_upload_file(file, os.path.join(OutputPath, OutputFile))
+            state=save_upload_file(file,os.path.join(OutputPath,OutputFile))
 
     #返回数据
     return_info = {
-        'url': urllib.basejoin(USettings.gSettings.MEDIA_URL , OutputPathFormat) ,                # 保存后的文件名称
+        'url': urllib.parse.urljoin(USettings.gSettings.MEDIA_URL , OutputPathFormat) ,                # 保存后的文件名称
         'original': upload_file_name,                  #原始文件名
         'type': upload_original_ext,
         'state': state,                         #上传状态，成功时返回SUCCESS,其他任何值将原样返回至图片上传框中
@@ -225,7 +219,7 @@ def catcher_remote_image(request):
     state="SUCCESS"
 
     allow_type= list(request.GET.get("catcherAllowFiles",USettings.UEditorUploadSettings.get("catcherAllowFiles","")))
-    max_size=long(request.GET.get("catcherMaxSize",USettings.UEditorUploadSettings.get("catcherMaxSize",0)))
+    max_size=int(request.GET.get("catcherMaxSize",USettings.UEditorUploadSettings.get("catcherMaxSize",0)))
 
     remote_urls=request.POST.getlist("source[]",[])
     catcher_infos=[]
@@ -254,14 +248,14 @@ def catcher_remote_image(request):
                     f.write(remote_image.read())
                     f.close()
                     state="SUCCESS"
-                except Exception,E:
+                except Exception as E:
                     state=u"写入抓取图片文件错误:%s" % E.message
-            except Exception,E:
+            except Exception as E:
                 state=u"抓取图片错误：%s" % E.message
 
             catcher_infos.append({
                 "state":state,
-                "url":urllib.basejoin(USettings.gSettings.MEDIA_URL , o_path_format),
+                "url":urllib.parse.urljoin(USettings.gSettings.MEDIA_URL , o_path_format),
                 "size":os.path.getsize(o_filename),
                 "title":os.path.basename(o_file),
                 "original":remote_file_name,
@@ -299,7 +293,7 @@ def save_scrawl_file(request,filename):
         f.write(base64.decodestring(content))
         f.close()
         state="SUCCESS"
-    except Exception,E:
+    except Exception as E:
         state="写入图片文件错误:%s" % E.message
     return state
 
