@@ -1,7 +1,7 @@
 #coding: utf-8
 
 from django import forms
-from widgets import UEditorWidget
+from DjangoUeditor.widgets import UEditorWidget
 from DjangoUeditor.models import UEditorField as ModelUEditorField
 
 class UEditorField(forms.CharField):
@@ -26,7 +26,7 @@ class UEditorModelForm(forms.ModelForm):
     def __init__(self,*args,**kwargs):
         super(UEditorModelForm,self).__init__(*args,**kwargs)
         try:
-            if kwargs.has_key("instance"):
+            if kwargs.get("instance"):
                 UpdateUploadPath(self,kwargs["instance"])
             else:
                 UpdateUploadPath(self,None)

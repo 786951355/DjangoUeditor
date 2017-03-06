@@ -143,7 +143,7 @@ def UploadFile(request):
         "uploadimage":"imageAllowFiles",
         "uploadvideo":"videoAllowFiles"
     }
-    if upload_allow_type.has_key(action):
+    if upload_allow_type.get(action):
         allow_type= list(request.GET.get(upload_allow_type[action],USettings.UEditorUploadSettings.get(upload_allow_type[action],"")))
         if not upload_original_ext  in allow_type:
             state=u"服务器不允许上传%s类型的文件。" % upload_original_ext
