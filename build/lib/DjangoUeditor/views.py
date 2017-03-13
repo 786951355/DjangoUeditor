@@ -63,8 +63,8 @@ def list_files(request):
         "listimage":USettings.UEditorUploadSettings.get("imageManagerListPath","")
     }
     #取得参数
-    list_size=long(request.GET.get("size",listSize[action]))
-    list_start=long(request.GET.get("start",0))
+    list_size=int(request.GET.get("size",listSize[action]))
+    list_start=int(request.GET.get("start",0))
 
     files=[]
     root_path=os.path.join(USettings.gSettings.MEDIA_ROOT,listpath[action]).replace("\\","/")
@@ -156,9 +156,9 @@ def UploadFile(request):
         "uploadscrawl":"scrawlMaxSize",
         "uploadvideo":"videoMaxSize"
     }
-    max_size=long(request.GET.get(upload_max_size[action],USettings.UEditorUploadSettings.get(upload_max_size[action],0)))
+    max_size=int(request.GET.get(upload_max_size[action],USettings.UEditorUploadSettings.get(upload_max_size[action],0)))
     if  max_size!=0:
-        from utils import FileSize
+        from DjangoUeditor.utils import FileSize
         MF=FileSize(max_size)
         if upload_file_size>MF.size:
             state=u"上传文件大小不允许超过%s。" % MF.FriendValue
@@ -211,7 +211,7 @@ def catcher_remote_image(request):
     state="SUCCESS"
 
     allow_type= list(request.GET.get("catcherAllowFiles",USettings.UEditorUploadSettings.get("catcherAllowFiles","")))
-    max_size=long(request.GET.get("catcherMaxSize",USettings.UEditorUploadSettings.get("catcherMaxSize",0)))
+    max_size=int(request.GET.get("catcherMaxSize",USettings.UEditorUploadSettings.get("catcherMaxSize",0)))
 
     remote_urls=request.POST.getlist("source[]",[])
     catcher_infos=[]
