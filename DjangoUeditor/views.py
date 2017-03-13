@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 import datetime,random
 import urllib
 import urllib.parse
+import urllib.request
 
 def get_path_format_vars():
     return {
